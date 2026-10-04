@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>test query - Search</title></head>
+<body>
+<ol id="b_results">
+
+  <!-- Result 1: title link is a Bing click-tracking redirect whose "u"
+       parameter base64url-encodes https://example.com/bing-one (prefix "a1"). -->
+  <li class="b_algo" data-id iid=SERP.1>
+    <h2 class=""><a target="_blank" href="https://www.bing.com/ck/a?!&amp;&amp;p=abc123&amp;ptn=3&amp;ver=2&amp;u=a1aHR0cHM6Ly9leGFtcGxlLmNvbS9iaW5nLW9uZQ&amp;ntb=1">First Bing Result</a></h2>
+    <div class="b_caption"><p class="b_lineclamp2">The first organic result from Bing, with a description.</p></div>
+  </li>
+
+  <!-- Result 2 -->
+  <li class="b_algo" data-id iid=SERP.2>
+    <h2 class=""><a target="_blank" href="https://www.bing.com/ck/a?!&amp;&amp;p=def456&amp;u=a1aHR0cHM6Ly9leGFtcGxlLm9yZy9iaW5nLXR3bw&amp;ntb=1">Second Bing Result</a></h2>
+    <div class="b_caption"><p class="b_lineclamp2">The second organic result from Bing.</p></div>
+  </li>
+
+  <!-- A Bing-internal navigation block that must be dropped. -->
+  <li class="b_algo">
+    <h2 class=""><a href="https://www.bing.com/images/search?q=test">Images</a></h2>
+  </li>
+
+</ol>
+</body></html>

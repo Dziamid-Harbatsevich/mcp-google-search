@@ -1,0 +1,12 @@
+# Compiled binary
+/mcp-google-search
+/mcp-google-search.exe
+
+# Test / coverage artifacts
+*.out
+*.test
+
+# Editor and OS cruft
+.DS_Store
+.idea/
+.vscode/
