@@ -19,10 +19,10 @@ const ServerName = "mcp-google-search"
 // the "omitempty" option are required (the SDK derives the JSON schema from
 // these struct tags).
 type SearchInput struct {
-	Query    string `json:"query" jsonschema:"The search query to send to Google. Prefer specific, natural-language queries."`
+	Query    string `json:"query" jsonschema:"The search query to send to the web. Prefer specific, natural-language queries."`
 	Num      int    `json:"num,omitempty" jsonschema:"Number of results to return, 1-10. Defaults to 5."`
 	Start    int    `json:"start,omitempty" jsonschema:"Zero-based index of the first result to return, for pagination. Defaults to 0."`
-	Language string `json:"language,omitempty" jsonschema:"Result language as a Google hl code, e.g. 'en', 'de', 'fr'. Defaults to 'en'."`
+	Language string `json:"language,omitempty" jsonschema:"Result language, e.g. 'en', 'de', 'fr'. Defaults to 'en'."`
 	Country  string `json:"country,omitempty" jsonschema:"Country code used to localize results, e.g. 'us', 'gb', 'de'."`
 	Safe     string `json:"safe,omitempty" jsonschema:"SafeSearch setting: 'off' or 'active'."`
 	Site     string `json:"site,omitempty" jsonschema:"Restrict results to a single site, e.g. 'example.com'."`
@@ -40,8 +40,12 @@ type SearchResult struct {
 // SearchOutput is the structured output of the google_search tool.
 type SearchOutput struct {
 	Query   string         `json:"query"`
+	Engine  string         `json:"engine,omitempty"`
 	Results []SearchResult `json:"results"`
 }
+
+// maxResults is the largest number of results a single call may return.
+const maxResults = 10
 
 // New builds the MCP server and registers the google_search tool.
 func New(client *websearch.Client, version string) *mcp.Server {
@@ -52,7 +56,7 @@ func New(client *websearch.Client, version string) *mcp.Server {
 
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "google_search",
-		Description: "Search the web and return ranked results with a title, URL and snippet for each hit. Uses Google first and falls back to Bing when Google requires JavaScript.",
+		Description: "Search the web and return ranked results with a title, URL and snippet for each hit. Queries an ordered list of engines (DuckDuckGo, Google, Bing by default) and uses the first that returns results, because Google answers non-browser clients with a JavaScript-only page.",
 	}, searchHandler(client))
 
 	return server
@@ -73,16 +77,33 @@ func searchHandler(client *websearch.Client) mcp.ToolHandlerFor[SearchInput, Sea
 		if num == 0 {
 			num = 5
 		}
+		// Clamp rather than trust the model: a large "num" would only be
+		// silently capped by the engines, which makes the response shape
+		// unpredictable for the caller.
+		if num < 1 {
+			num = 1
+		}
+		if num > maxResults {
+			num = maxResults
+		}
+
+		start := in.Start
+		if start < 0 {
+			start = 0
+		}
 
 		results, err := client.Search(ctx, websearch.Request{
 			Query:    query,
 			Num:      num,
-			Start:    in.Start,
-			Language: in.Language,
-			Country:  in.Country,
-			Safe:     in.Safe,
+			Start:    start,
+			Language: strings.ToLower(strings.TrimSpace(in.Language)),
+			Country:  strings.ToLower(strings.TrimSpace(in.Country)),
+			Safe:     strings.ToLower(strings.TrimSpace(in.Safe)),
 		})
 		if err != nil {
+			// Returning the error makes it visible to the model as tool failure
+			// rather than as a confident "no results found", which would be
+			// actively misleading when every engine was blocked.
 			return nil, SearchOutput{}, err
 		}
 
@@ -98,6 +119,9 @@ func searchHandler(client *websearch.Client) mcp.ToolHandlerFor[SearchInput, Sea
 				Snippet: r.Snippet,
 				Source:  r.Source,
 			})
+			if out.Engine == "" {
+				out.Engine = r.Source
+			}
 		}
 
 		return &mcp.CallToolResult{

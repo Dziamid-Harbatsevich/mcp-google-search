@@ -20,6 +20,10 @@ type bingEngine struct{}
 func (bingEngine) Name() string           { return EngineBing }
 func (bingEngine) DefaultBaseURL() string { return bingDefaultBaseURL }
 
+// NeedsJavaScript reports false: Bing's HTML results page does contain organic
+// hits server-side.
+func (bingEngine) NeedsJavaScript() bool { return false }
+
 // SearchURL builds a Bing /search URL.
 func (bingEngine) SearchURL(base string, req Request) string {
 	params := url.Values{}
@@ -38,9 +42,23 @@ func (bingEngine) SearchURL(base string, req Request) string {
 		params.Set("cc", req.Country)
 	}
 	if req.Safe != "" {
-		params.Set("adlt", req.Safe)
+		// Bing's adult filter takes "strict"/"moderate"/"off", not Google's
+		// "active", so the value is translated rather than passed through.
+		params.Set("adlt", bingAdultLevel(req.Safe))
 	}
 	return base + "/search?" + params.Encode()
+}
+
+// bingAdultLevel maps a SafeSearch setting onto Bing's "adlt" vocabulary.
+func bingAdultLevel(safe string) string {
+	switch strings.ToLower(strings.TrimSpace(safe)) {
+	case "off", "moderate":
+		return strings.ToLower(strings.TrimSpace(safe))
+	case "active", "strict":
+		return "strict"
+	default:
+		return "moderate"
+	}
 }
 
 // IsBlocked reports whether Bing served a CAPTCHA page.

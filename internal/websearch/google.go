@@ -31,6 +31,10 @@ type googleEngine struct{}
 func (googleEngine) Name() string           { return EngineGoogle }
 func (googleEngine) DefaultBaseURL() string { return googleDefaultBaseURL }
 
+// NeedsJavaScript reports true: Google answers plain HTTP clients with a
+// bootstrap shell and renders organic results only in the browser.
+func (googleEngine) NeedsJavaScript() bool { return true }
+
 // SearchURL builds a Google /search URL.
 func (googleEngine) SearchURL(base string, req Request) string {
 	params := url.Values{}

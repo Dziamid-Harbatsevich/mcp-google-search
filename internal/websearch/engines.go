@@ -7,14 +7,16 @@ import (
 
 // Supported engine names.
 const (
-	EngineGoogle = "google"
-	EngineBing   = "bing"
+	EngineGoogle     = "google"
+	EngineBing       = "bing"
+	EngineDuckDuckGo = "duckduckgo"
 )
 
 // registry maps engine names to their implementations.
 var registry = map[string]Engine{
-	EngineGoogle: googleEngine{},
-	EngineBing:   bingEngine{},
+	EngineGoogle:     googleEngine{},
+	EngineBing:       bingEngine{},
+	EngineDuckDuckGo: duckduckgoEngine{},
 }
 
 // EngineByName returns the engine registered under name (case-insensitive).

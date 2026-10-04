@@ -43,6 +43,12 @@ const (
 // page instead of results.
 var ErrBlocked = errors.New("search engine blocked the request (rate limit or CAPTCHA); reduce request frequency and try again later")
 
+// ErrUnsupported is returned when an engine served a page it does not render for
+// non-browser clients, most commonly the JavaScript-only shell that Google
+// returns over plain HTTP. It is distinct from ErrBlocked: nothing is wrong
+// with the request, the engine simply cannot answer it.
+var ErrUnsupported = errors.New("engine served a non-rendered page (JavaScript-only shell); not usable over plain HTTP")
+
 // Result is a single organic search result.
 type Result struct {
 	Rank    int    `json:"rank"`
@@ -74,6 +80,11 @@ type Engine interface {
 	Parse(doc *goquery.Document) []Result
 	// IsBlocked reports whether the page is a rate-limit/CAPTCHA page.
 	IsBlocked(doc *goquery.Document) bool
+	// NeedsJavaScript reports whether the engine can serve results to a plain
+	// HTTP client at all. Engines that answer with a JavaScript-only shell
+	// return true here, which lets Search skip them immediately instead of
+	// treating the empty page as "no matches".
+	NeedsJavaScript() bool
 }
 
 // Client performs web searches over HTTP using one or more engines.
@@ -165,6 +176,10 @@ func (c *Client) Engines() []string {
 
 // Search runs the query against each configured engine until one returns
 // results. An empty result set (no matches) is not an error.
+//
+// Engines that report NeedsJavaScript are still tried, because a given engine
+// may start rendering results again; when one yields nothing, the next engine
+// is tried rather than reporting "no matches".
 func (c *Client) Search(ctx context.Context, req Request) ([]Result, error) {
 	if strings.TrimSpace(req.Query) == "" {
 		return nil, errors.New("query must not be empty")
@@ -194,7 +209,10 @@ func (c *Client) Search(ctx context.Context, req Request) ([]Result, error) {
 	}
 
 	if firstErr != nil {
-		return nil, firstErr
+		// Every engine failed outright: report why. This is the common case when
+		// the configured engines are all blocked or all JavaScript-only, and an
+		// empty result set would otherwise look like a genuine "no matches".
+		return nil, fmt.Errorf("all search engines failed (%s): %w", strings.Join(c.Engines(), ", "), firstErr)
 	}
 	return nil, nil
 }
@@ -216,9 +234,23 @@ func (c *Client) search(ctx context.Context, engine Engine, base string, req Req
 	}
 
 	results := engine.Parse(doc)
+	if len(results) == 0 && engine.NeedsJavaScript() && looksLikeJSShell(doc) {
+		// The page parsed cleanly but held no hits. For an engine that only ever
+		// renders results via JavaScript this means the shell, not "no matches",
+		// and reporting it as such would send the caller off chasing a query
+		// that may well have plenty of hits.
+		return nil, fmt.Errorf("%s: %w", engine.Name(), ErrUnsupported)
+	}
 	for i := range results {
 		results[i].Rank = i + 1
 		results[i].Source = engine.Name()
+	}
+
+	// Engines honour the page-size hint inconsistently (DuckDuckGo ignores it
+	// entirely and always returns a fixed page), so cap here. Without this the
+	// caller gets a full page no matter what it asked for.
+	if req.Num > 0 && len(results) > req.Num {
+		results = results[:req.Num]
 	}
 	return results, nil
 }
@@ -247,10 +279,37 @@ func (c *Client) fetch(ctx context.Context, requestURL string) (io.ReadCloser, e
 	case http.StatusTooManyRequests:
 		resp.Body.Close()
 		return nil, ErrBlocked
+	case http.StatusAccepted:
+		// DuckDuckGo serves its anti-bot challenge with 202 and a body describing
+		// it. The body is still worth reading so the engine can recognise the
+		// challenge and report it as blocked rather than as an HTTP error.
+		return resp.Body, nil
 	default:
 		resp.Body.Close()
 		return nil, fmt.Errorf("search engine returned HTTP %d", resp.StatusCode)
 	}
+}
+
+// looksLikeJSShell reports whether a page with no results is the JavaScript
+// bootstrap Google (and similar engines) serve to non-browser clients.
+func looksLikeJSShell(doc *goquery.Document) bool {
+	// A real results page always has outlinks to somewhere.
+	if doc.Find("a[href^='http']").Length() > 20 {
+		return false
+	}
+	text := strings.ToLower(cleanText(doc.Text()))
+	for _, marker := range []string{
+		"please click here if you are not redirected",
+		"enable javascript",
+		"javascript is disabled",
+		"this page needs javascript",
+		"detected unusual traffic",
+	} {
+		if strings.Contains(text, marker) {
+			return true
+		}
+	}
+	return doc.Find("noscript, script[src]").Length() > 0 && doc.Find("h3, .b_algo, .result").Length() == 0
 }
 
 // cleanText collapses whitespace runs into single spaces and trims.

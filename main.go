@@ -25,7 +25,7 @@ func main() {
 	var (
 		transport   = flag.String("transport", envOrDefault("MCP_TRANSPORT", "stdio"), "transport to use: stdio or http")
 		addr        = flag.String("addr", envOrDefault("MCP_ADDR", ":8080"), "listen address for the http transport")
-		engine      = flag.String("engine", envOrDefault("SEARCH_ENGINES", "google,bing"), "comma-separated search engines, tried in order (supported: google, bing)")
+		engine      = flag.String("engine", envOrDefault("SEARCH_ENGINES", "duckduckgo,google,bing"), "comma-separated search engines, tried in order (supported: duckduckgo, google, bing)")
 		baseURL     = flag.String("base-url", os.Getenv("SEARCH_BASE_URL"), "override the base URL of every search engine (optional)")
 		userAgent   = flag.String("user-agent", envOrDefault("SEARCH_USER_AGENT", websearch.DefaultUserAgent), "User-Agent header sent to search engines")
 		minInterval = flag.Duration("min-interval", envDuration("SEARCH_MIN_INTERVAL", websearch.DefaultMinInterval), "minimum spacing between search requests")
