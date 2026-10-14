@@ -74,12 +74,12 @@ func TestGoogleSearchToolListsTool(t *testing.T) {
 
 	var found bool
 	for _, tool := range res.Tools {
-		if tool.Name == "google_search" {
+		if tool.Name == "web_search" {
 			found = true
 		}
 	}
 	if !found {
-		t.Fatalf("google_search tool not listed; got %d tools", len(res.Tools))
+		t.Fatalf("web_search tool not listed; got %d tools", len(res.Tools))
 	}
 }
 
@@ -87,7 +87,7 @@ func TestGoogleSearchToolReturnsResults(t *testing.T) {
 	session := newSession(t)
 
 	res, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "google_search",
+		Name:      "web_search",
 		Arguments: map[string]any{"query": "golang mcp", "num": 2},
 	})
 	if err != nil {
@@ -110,7 +110,7 @@ func TestGoogleSearchToolRejectsEmptyQuery(t *testing.T) {
 	session := newSession(t)
 
 	res, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "google_search",
+		Name:      "web_search",
 		Arguments: map[string]any{"query": ""},
 	})
 	if err != nil {
@@ -205,7 +205,7 @@ func TestToolDescriptionNamesDefaultEngineOrder(t *testing.T) {
 		t.Fatalf("ListTools: %v", err)
 	}
 	for _, tool := range res.Tools {
-		if tool.Name != "google_search" {
+		if tool.Name != "web_search" {
 			continue
 		}
 		if !strings.Contains(tool.Description, "DuckDuckGo") {
@@ -213,7 +213,7 @@ func TestToolDescriptionNamesDefaultEngineOrder(t *testing.T) {
 		}
 		return
 	}
-	t.Fatal("google_search tool not listed")
+	t.Fatal("web_search tool not listed")
 }
 
 // An out-of-range "num" must be clamped rather than rejected, and must never
@@ -224,7 +224,7 @@ func TestSearchClampsNum(t *testing.T) {
 
 	for _, num := range []int{99, -3, 0, 2} {
 		res, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-			Name:      "google_search",
+			Name:      "web_search",
 			Arguments: map[string]any{"query": "golang mcp", "num": num},
 		})
 		if err != nil {
@@ -243,7 +243,7 @@ func TestSearchClampsNum(t *testing.T) {
 func TestSearchClampsStart(t *testing.T) {
 	session, lastQuery := newSessionWithResultCount(t, 2)
 	if _, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "google_search",
+		Name:      "web_search",
 		Arguments: map[string]any{"query": "golang mcp", "start": -5},
 	}); err != nil {
 		t.Fatalf("CallTool: %v", err)
@@ -257,7 +257,7 @@ func TestSearchClampsStart(t *testing.T) {
 func TestSearchAppendsSiteOperator(t *testing.T) {
 	session, lastQuery := newSessionWithResultCount(t, 2)
 	if _, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "google_search",
+		Name:      "web_search",
 		Arguments: map[string]any{"query": "mcp sdk", "site": "github.com"},
 	}); err != nil {
 		t.Fatalf("CallTool: %v", err)
@@ -268,7 +268,7 @@ func TestSearchAppendsSiteOperator(t *testing.T) {
 
 	// An explicit site: in the query must not be duplicated.
 	if _, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "google_search",
+		Name:      "web_search",
 		Arguments: map[string]any{"query": "mcp site:golang.org", "site": "github.com"},
 	}); err != nil {
 		t.Fatalf("CallTool: %v", err)
@@ -286,7 +286,7 @@ func TestSearchSurfacesEngineFailureAsToolError(t *testing.T) {
 to confirm this search was made by a human.</p></body></html>`)
 
 	res, err := session.CallTool(context.Background(), &mcp.CallToolParams{
-		Name:      "google_search",
+		Name:      "web_search",
 		Arguments: map[string]any{"query": "golang mcp"},
 	})
 	if err != nil {

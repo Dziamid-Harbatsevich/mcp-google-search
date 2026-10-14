@@ -1,5 +1,5 @@
 // Package mcpserver wires the gsearch client into an MCP server exposing a
-// single "google_search" tool.
+// single "web_search" tool.
 package mcpserver
 
 import (
@@ -15,7 +15,7 @@ import (
 // ServerName is the implementation name advertised to MCP clients.
 const ServerName = "mcp-google-search"
 
-// SearchInput is the input schema for the google_search tool. Fields without
+// SearchInput is the input schema for the web_search tool. Fields without
 // the "omitempty" option are required (the SDK derives the JSON schema from
 // these struct tags).
 type SearchInput struct {
@@ -37,7 +37,7 @@ type SearchResult struct {
 	Source  string `json:"source,omitempty"`
 }
 
-// SearchOutput is the structured output of the google_search tool.
+// SearchOutput is the structured output of the web_search tool.
 type SearchOutput struct {
 	Query   string         `json:"query"`
 	Engine  string         `json:"engine,omitempty"`
@@ -47,7 +47,7 @@ type SearchOutput struct {
 // maxResults is the largest number of results a single call may return.
 const maxResults = 10
 
-// New builds the MCP server and registers the google_search tool.
+// New builds the MCP server and registers the web_search tool.
 func New(client *websearch.Client, version string) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    ServerName,
@@ -55,7 +55,7 @@ func New(client *websearch.Client, version string) *mcp.Server {
 	}, nil)
 
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "google_search",
+		Name:        "web_search",
 		Description: "Search the web and return ranked results with a title, URL and snippet for each hit. Queries an ordered list of engines (DuckDuckGo, Google, Bing by default) and uses the first that returns results, because Google answers non-browser clients with a JavaScript-only page.",
 	}, searchHandler(client))
 

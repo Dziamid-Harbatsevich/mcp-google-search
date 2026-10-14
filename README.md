@@ -32,7 +32,7 @@ Use the absolute path to the binary. Then restart LM Studio, or toggle the serve
 
 ## The tool
 
-One tool is exposed: `google_search`.
+One tool is exposed: `web_search`.
 
 | Field | Type | Description |
 | --- | --- | --- |
