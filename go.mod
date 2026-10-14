@@ -1,4 +1,4 @@
-module github.com/demid/mcp-google-search
+module github.com/demid/mcp-web-search
 
 go 1.26.0
 

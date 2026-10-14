@@ -1,4 +1,4 @@
-// Command mcp-google-search is a Model Context Protocol (MCP) server that
+// Command mcp-web-search is a Model Context Protocol (MCP) server that
 // exposes a Google web search tool. It is designed to be run by an MCP host
 // such as LM Studio over the stdio transport.
 package main
@@ -14,8 +14,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/demid/mcp-google-search/internal/mcpserver"
-	"github.com/demid/mcp-google-search/internal/websearch"
+	"github.com/demid/mcp-web-search/internal/mcpserver"
+	"github.com/demid/mcp-web-search/internal/websearch"
 )
 
 // version is reported to MCP clients during initialization.

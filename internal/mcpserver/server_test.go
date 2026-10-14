@@ -11,7 +11,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/demid/mcp-google-search/internal/websearch"
+	"github.com/demid/mcp-web-search/internal/websearch"
 )
 
 // serpHTML is a minimal, representative Google results page used to exercise

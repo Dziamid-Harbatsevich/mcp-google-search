@@ -1,6 +1,6 @@
 # Compiled binary
-/mcp-google-search
-/mcp-google-search.exe
+/mcp-web-search
+/mcp-web-search.exe
 
 # Test / coverage artifacts
 *.out

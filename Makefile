@@ -1,4 +1,4 @@
-BINARY := mcp-google-search
+BINARY := mcp-web-search
 
 .PHONY: build test vet fmt tidy clean run
 

@@ -1,4 +1,4 @@
-# mcp-google-search
+# mcp-web-search
 
 A Model Context Protocol (MCP) server that exposes a web search tool to LM Studio.
 
@@ -7,7 +7,7 @@ No API key is required. It scrapes search-engine results pages, tries each confi
 ## Install
 
 ```bash
-make build          # produces ./mcp-google-search
+make build          # produces ./mcp-web-search
 ```
 
 ## Configure in LM Studio
@@ -17,7 +17,7 @@ LM Studio reads MCP servers from `~/.lmstudio/mcp.json` (create it if missing):
 ```json
 {
   "mcpServers": {
-    "google-search": {
+    "web-search": {
       "command": "/your/local/path",
       "args": ["-transport", "stdio"],
       "env": {

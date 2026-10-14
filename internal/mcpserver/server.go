@@ -9,11 +9,11 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/demid/mcp-google-search/internal/websearch"
+	"github.com/demid/mcp-web-search/internal/websearch"
 )
 
 // ServerName is the implementation name advertised to MCP clients.
-const ServerName = "mcp-google-search"
+const ServerName = "mcp-web-search"
 
 // SearchInput is the input schema for the web_search tool. Fields without
 // the "omitempty" option are required (the SDK derives the JSON schema from
